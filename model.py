@@ -41,10 +41,11 @@ class Word(db.Model):
 	freq = db.Column(db.Integer, nullable=False)
 	sentence = db.Column(db.Text, nullable=False)
 	selection = db.Column(db.String(50), nullable=False)
-	parts_of_speech = db.Column(db.String(50), nullable=True)
-	meaning =  db.Column(db.Text, nullable=True)
-	pronunciation = db.Column(db.String(50), nullable=True)
-	other_usage = db.Column(db.Text, nullable=True)
+	parts_of_speech = db.Column(db.String(50), nullable=False)
+	definition =  db.Column(db.Text, nullable=False)
+	pronunciation = db.Column(db.String(50), nullable=False)
+	other_usage = db.Column(db.Text, nullable=False, default="")
+	other_usage_link = db.Column(db.Text, nullable=False, default="")
 
 	transcript = db.relationship('Transcript', backref=db.backref('words', order_by=word_id))
 
@@ -54,7 +55,9 @@ class Word(db.Model):
 
 	@classmethod
 	def add_word(cls, word, talk_id, stem, 
-				freq, sentence, selection):
+				freq, sentence, selection,
+				parts_of_speech, definition,
+				pronunciation):
 		"""Create and insert a new Word objects to db. Returns new Word object. 
 
 		New objects are selected by the parsing algorithm in get_vocab() in vocab_parsing.py .
@@ -66,11 +69,25 @@ class Word(db.Model):
 					stem=stem,
 					freq=freq,
 					sentence=sentence,
-					selection=selection)
+					selection=selection,
+					parts_of_speech=parts_of_speech,
+					definition=definition,
+					pronunciation=pronunciation)
 		
 		db.session.add(word)
 		db.session.commit()
 		return word
+
+	def update_ny_records(self, other_usage, other_usage_link):
+		"""Updates ny times sentence and the link it came from.
+
+		Allows ajax to happen; helps saves loading time"""
+
+		self.other_usage = other_usage
+		self.other_usage_link = other_usage_link
+
+		db.session.commit()
+		
 
 	def create_exercise_prompt(self):
 		"""Creates a tuple of the two halves of the sentence and the length of the deleted word.
@@ -80,13 +97,22 @@ class Word(db.Model):
 		"""
 		vocab = self.word
 		sentence = self.sentence.split()
+		#BUG: why did the vocab "architect" return a sentence with "architecture"?	
 		for word in sentence:
-			if word == vocab:
+			if word.lower() == vocab:#accounts for words at the beginning of the sentence too
 				splitting_index = sentence.index(word)
 				first_half_of_sentence = " ".join(sentence[:splitting_index]) + " "
 				second_half_of_sentence = " " + " ".join(sentence[splitting_index+1:])
 				#space strings to help make the fron look prettier
 				return (first_half_of_sentence, second_half_of_sentence, len(vocab)) #will change to length in a bit!
+
+	def split_definition(self):
+		"""Input a word object, split definition into a list of entries.
+		""" 
+
+		definition_string = self.definition
+		return definition_string.split(":")
+
 
 
 class User(db.Model):
@@ -105,9 +131,17 @@ class User(db.Model):
 	#not sure if I'm setting this up right--is probablu throwing the error
 
 	@classmethod
-	def add_user(cls, user_id, email, password, fname, lname):
+	def add_user(cls, email, password, fname, lname):
 		"""Add user objects to db when users sign up in the app"""
-		pass 
+
+		user = cls(	email=email,
+					password=password,
+					fname=fname,
+					lname=lname)
+		
+		db.session.add(user)
+		db.session.commit()
+		return None
 
 # Another way to create tables that won't be actual objects
 # user_word = db.Table('user_word',
@@ -124,6 +158,17 @@ class UserWord(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
 	word_id = db.Column(db.Integer, db.ForeignKey('words.word_id'))
 
+	@classmethod
+	def add_user_word(cls, user_id, word_id):
+		"""Add user_words objects to db when users select a vocab"""
+
+		user_word = cls(user_id=user_id,
+						word_id=word_id)
+		
+		db.session.add(user_word)
+		db.session.commit()
+		return None
+	
 ###################################################################################
 #Helper Functions
 

@@ -1,11 +1,67 @@
 {% extends 'base.html' %}
-{% block content %}
 
-	<form action="/query" method='post'>
+{% block content %}
+	
+	{% if "user_id" in session %}
+    	<h3>USER PROFILE</h3>
+
+        {% if words %}
+        <h5>Here are the words you have studied so far:</h5>
+            {% for word in words %}
+        		<ul>
+        			<li><div class='stored_list' id='{{word.word_id}}'>{{word.word}}</div></li>
+        		</ul>
+            {% endfor %}
+        
+        {% else %}
+            <h5>Looks like you havent' stored any vocabulary yet.</h5>
+        {% endif %}
+
+    {% else %}
+    	<form action='/create_account'>
+    		<label>
+    			<input type='submit' value="Create an Account">
+    		</label>
+    	</form>
+    {% endif %}
+
+	<br>
+	<form action="/query" method='get'>
 		<label>Enter key word to search for ted talks:
 			<input type='text' name='key_word'>
 		</label>
 		<input type='submit' value='Search for Ted Talks'>
 	</form>
 
+
+
+    <script src="https://code.jquery.com/jquery.js"></script>
+
+    <script>  
+    removeVocab = function(){
+        $.post('/remove_vocab', {'word_id':this.id}, function(data){
+            alert(data);
+            }
+        );
+
+
+    }
+    var stored_list = $('.stored_list');
+    console.log(stored_list)
+    for (var i=0; i < stored_list.length; i++){
+        $(stored_list[i]).on('click', removeVocab);
+
+    }
+
+    </script>
+
+
 {% endblock %}
+
+
+
+
+
+
+
+
