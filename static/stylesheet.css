@@ -1,17 +1,36 @@
-table .vocab_chart{
+table.query-results{
+	padding: 10px;
+	border: none;
+	float:left
+}
+
+table.toggle_chart {
 	width: 1000px;
+	margin-left: auto; 
+	margin-right: auto;
+	border: 1px solid black;
 
 }
-table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}
 
-th .vocab_head, td{
+table.toggle_chart tr th td {
+	border: 1px solid black;
+
+}
+th.vocab_head, td{
 	width: 250px;
 	padding: 4px;
 }
 
+.display_vocab_quiz {
+	width:800px;
+	margin-left: auto; 
+	margin-right: auto;
+}
+
+.each_vocab_quiz {
+	border: 1px solid black;
+	padding: 8px;
+}
 #video {
 	display: block;
     margin-left: auto;
@@ -19,5 +38,9 @@ th .vocab_head, td{
 }
 
 #transcript_para {
-	width: 800 px;
+	width: 1000px;
+	margin-left: auto; 
+	margin-right: auto;
 }
+
+
